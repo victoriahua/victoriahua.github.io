@@ -356,7 +356,7 @@ const HASHTAG='#政瞳云花园#';
 const SB={url:'https://pdohmloezybrvhzwrrll.supabase.co',key:'sb_publishable_NYZD-GOIA5VsgHtOy85fGA_B4mkk58F'};   // Supabase 公开密钥，只允许读和新增
 const TBL={'garden-flowers':'flowers','garden-lines':'lines','catgame-prizes':'prizes','catgame-runs':'runs'};
 async function sb(path,opt={}){const r=await fetch(SB.url+'/rest/v1/'+path,Object.assign({},opt,{headers:Object.assign({apikey:SB.key,Authorization:'Bearer '+SB.key,'Content-Type':'application/json',Prefer:'return=minimal'},opt.headers||{})}));
-  if(!r.ok){const e=new Error('db '+r.status);e.status=r.status;throw e}return r.status===204?null:r.json()}
+  if(!r.ok){const e=new Error('db '+r.status);e.status=r.status;throw e}const txt=await r.text();return txt?JSON.parse(txt):null}
 const store={
   async get(key='garden-flowers'){if(SB.url&&TBL[key]){try{const rows=await sb(TBL[key]+'?select=*&order=t.asc&limit=5000');return key==='catgame-runs'?[rows.length]:rows.map(r=>r.data)}catch(e){console.warn(e)}}
     try{if(window.storage){const r=await window.storage.get(key,true);return r?JSON.parse(r.value):[]}}catch(e){}
@@ -365,7 +365,7 @@ const store={
   async set(list,key='garden-flowers'){mems[key]=list;
     if(SB.url&&TBL[key]){try{if(key==='catgame-runs'){await sb('runs',{method:'POST',body:JSON.stringify({t:Date.now()})});return true}
         const d=list[list.length-1];if(!d)return true;const row={t:d.t||Date.now(),data:d};if(key==='catgame-prizes')row.n=String(d.n||'').toLowerCase();
-        await sb(TBL[key],{method:'POST',body:JSON.stringify(row)});return true}catch(e){console.warn(e);return false}}
+        await sb(TBL[key],{method:'POST',body:JSON.stringify(row)});return true}catch(e){console.warn(e);window.__dbErr=e.message;return false}}
     try{if(window.storage){await window.storage.set(key,JSON.stringify(list),true);return true}}catch(e){}
     try{localStorage.setItem(key,JSON.stringify(list))}catch(e){}return true}};
 const mems={};
@@ -388,7 +388,7 @@ let savedMe=null;try{savedMe=JSON.parse(localStorage.getItem('garden-me')||'null
 async function loadGarden(){const list=await store.get();list.forEach((e,i)=>{const g=fanFlower(e,i);if(savedMe&&e.n===savedMe.n&&e.t===savedMe.t)me=g});renderCount(list.length);renderWall(list);
   if(me){document.getElementById('ovl').style.display='none';document.getElementById('fNick').value=savedMe.n;say({g:me,h:me.userData.h},savedMe.n+'，欢迎回来 🌻',3);target.set(me.position.x,4,me.position.z)}}
 document.getElementById('fPlant').onclick=async()=>{const n=document.getElementById('fNick').value.trim();if(!n){document.getElementById('fNick').focus();return}
-  const e={n,m:document.getElementById('fMsg').value.trim(),c:pick,t:Date.now()};const list=await store.get();list.push(e);const ok=await store.set(list);if(!ok){alert('保存失败，请稍后再试');return}
+  const e={n,m:document.getElementById('fMsg').value.trim(),c:pick,t:Date.now()};const list=await store.get();list.push(e);const ok=await store.set(list);if(!ok){alert('保存失败：'+(window.__dbErr||'网络问题')+'，请稍后再试');return}
   try{localStorage.setItem('garden-me',JSON.stringify({n:e.n,t:e.t}))}catch(x){}
   me=fanFlower(e,list.length-1,true);renderCount(list.length);renderWall(list);document.getElementById('ovl').style.display='none';
   say({g:me,h:me.userData.h},n+'，你在这里 🌻',3);target.set(me.position.x,4,me.position.z)};
@@ -409,7 +409,7 @@ mapC.addEventListener('pointerdown',e=>{const r=mapC.getBoundingClientRect();con
 document.getElementById('lineReset').onclick=()=>{sel=[];paintUI()};
 document.getElementById('bookClose').onclick=()=>document.getElementById('bookUI').style.display='none';
 document.getElementById('lineSave').onclick=async()=>{if(sel.length<2)return;const nick=me?me.userData.entry.n:(document.getElementById('fNick').value.trim()||'匿名');
-  const list=await store.get('garden-lines');list.push({p:[...sel],n:nick,t:Date.now()});const ok=await store.set(list,'garden-lines');if(!ok){alert('保存失败，请稍后再试');return}MAP.lines=list;refreshBook();sel=[];paintUI();
+  const list=await store.get('garden-lines');list.push({p:[...sel],n:nick,t:Date.now()});const ok=await store.set(list,'garden-lines');if(!ok){alert('保存失败：'+(window.__dbErr||'网络问题')+'，请稍后再试');return}MAP.lines=list;refreshBook();sel=[];paintUI();
   document.getElementById('bookUI').style.display='none';chars.forEach(c=>say(c,'红线系好了 🧡',2))};
 store.get('garden-lines').then(l=>{MAP.lines=l;refreshBook()});
 
