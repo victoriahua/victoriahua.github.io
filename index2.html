@@ -71,7 +71,7 @@
 <div id="stage"></div>
 <div id="topfade"></div>
 <div id="title">Ayden ×Elio</div>
-<div id="hint">摇杆/方向键跑动 · 点人物切换 · 拖动转视角 · <span id="ver">v0925-18</span></div>
+<div id="hint">摇杆/方向键跑动 · 点人物切换 · 拖动转视角 · <span id="ver">v0925-19</span></div>
 <div id="count"></div>
 <div id="tools"><button class="btn" id="btnSnap">📷 拍照</button><button class="btn" id="btnAR" style="background:#f2c14e;color:#3a2a20">🤳 和他们合影</button><button class="btn alt" id="btnWall">留言墙</button><button class="btn alt" id="btnCat">🐱 找猫猫</button><button class="btn alt" id="btnQuiz">❓ 问答</button><div id="lives" title="每天的挑战次数"></div></div>
 <input type="file" id="arPhotoIn" accept="image/*" style="display:none">
@@ -412,6 +412,12 @@ const swEl=document.getElementById('sw');let pick=0;
 FCOL.forEach((c,i)=>{const b=document.createElement('i');b.style.background=c;if(!i)b.className='on';b.onclick=()=>{pick=i;[...swEl.children].forEach(x=>x.className='');b.className='on'};swEl.appendChild(b)});
 const FIELD=(()=>{const cells=[];const blocked=[[58,26,7],[-62,22,9],[0,14,5]];   // 问答亭、猫房、爱心附近留空
   for(let z=24;z<=58;z+=2.2)for(let x=-66;x<=66;x+=2.6){if(blocked.some(([bx,bz,r])=>Math.hypot(x-bx,z-bz)<r))continue;cells.push([x,z])}return cells})();
+// 花田本体：一垄一垄的田埂 + 每个格位一株小苗，种下花后花会盖住小苗
+(function fieldDeco(){const rows=[...new Set(FIELD.map(c=>c[1]))];rows.forEach((z,i)=>slab(134,0.12,1.0,i%2?'#4a9a44':'#57a94e',0,0.02,z+0.9));
+  const sp=new Cubes();FIELD.forEach(([x,z],i)=>{const j=((i*7919)%100)/100-0.5;sp.add(x+j*1.2,0.35,z+j*0.8,0.45,'#6fc25c');sp.add(x+j*1.2+0.3,0.75,z+j*0.8,0.35,'#8fd47a')});sp.build(null,false);
+  florals(-72,42,8,38,70,.5);florals(72,42,8,38,70,.5);   // 两侧野花
+  const st=new Cubes();for(let z=16;z<60;z+=2.6){st.add(-68+Math.sin(z*.4)*1.2,0.15,z,1.6,'#c9c2b4');st.add(68+Math.cos(z*.4)*1.2,0.15,z,1.6,'#c9c2b4')}st.build(null,false);   // 两边石板小径
+})();
 function fanFlower(entry,idx,pop){const g=new THREE.Group();
   const cell=FIELD[idx%FIELD.length];const jx=((idx*7919)%100)/100-0.5,jz=((idx*104729)%100)/100-0.5;   // 固定格位 + 一点随机偏移；超过容量从头叠放
   g.position.set(cell[0]+jx*1.2,0,cell[1]+jz*1.0);scene.add(g);
