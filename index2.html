@@ -15,9 +15,9 @@
   .bub{position:fixed;transform:translate(-50%,-100%);background:#fff;border:2px solid #3a2a20;padding:3px 8px;font-size:12px;pointer-events:none;white-space:nowrap}
   .bub:after{content:'';position:absolute;left:50%;bottom:-6px;width:4px;height:4px;background:#3a2a20;margin-left:-2px}
   #flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
-  #pols{position:fixed;top:70px;right:10px;display:flex;flex-direction:column;gap:8px}
+  #pols{position:fixed;top:110px;left:10px;display:flex;flex-direction:column;gap:8px;z-index:4}
   .pol{background:#fff;padding:4px 4px 12px;border:2px solid #3a2a20;box-shadow:3px 3px 0 #3a2a20;transform:rotate(3deg);cursor:pointer}
-  .pol img{width:80px;display:block}
+  .pol img{width:64px;display:block}
   #joy{position:fixed;left:18px;bottom:18px;width:120px;height:120px;border-radius:50%;background:rgba(58,42,32,.12);border:2px solid rgba(58,42,32,.35);touch-action:none}
   #knob{position:absolute;left:38px;top:38px;width:44px;height:44px;border-radius:50%;background:#f0842a;border:3px solid #3a2a20;box-shadow:2px 2px 0 #3a2a20}
   #who{position:fixed;left:150px;bottom:64px;font-size:11px;opacity:.7;pointer-events:none}
@@ -71,7 +71,7 @@
 <div id="stage"></div>
 <div id="topfade"></div>
 <div id="title">Ayden ×Elio</div>
-<div id="hint">摇杆/方向键跑动 · 点人物切换 · 拖动转视角 · <span id="ver">v0925-19</span></div>
+<div id="hint">摇杆/方向键跑动 · 点人物切换 · 拖动转视角 · <span id="ver">v0925-22</span></div>
 <div id="count"></div>
 <div id="tools"><button class="btn" id="btnSnap">📷 拍照</button><button class="btn" id="btnAR" style="background:#f2c14e;color:#3a2a20">🤳 和他们合影</button><button class="btn alt" id="btnWall">留言墙</button><button class="btn alt" id="btnCat">🐱 找猫猫</button><button class="btn alt" id="btnQuiz">❓ 问答</button><div id="lives" title="每天的挑战次数"></div></div>
 <input type="file" id="arPhotoIn" accept="image/*" style="display:none">
@@ -317,8 +317,8 @@ const CHAR={ayden:{body:[0,18],legL:[18,22,5,9],legR:[18,22,9,12],hairRows:10,sk
 function makeChar(name){const cf=CHAR[name];const dep=(ch,r)=>(r<cf.hairRows&&!cf.skin.includes(ch))?7:5;
   const g=new THREE.Group();const body=voxel(name,5,dep,cf.body);const lL=voxel(name,5,null,[cf.legL[0],cf.legL[1]],[cf.legL[2],cf.legL[3]]);const lR=voxel(name,5,null,[cf.legR[0],cf.legR[1]],[cf.legR[2],cf.legR[3]]);
   [body,lL,lR].forEach(p=>{p.userData.name=name;g.add(p)});g.userData.name=name;g.userData.legs=[lL,lR];g.scale.setScalar(0.46);scene.add(g);return g}
-const chars=[{n:'Ayden',g:makeChar('ayden'),x:-9,z:8,vx:0,vz:0,face:0,jump:0,walk:0,lines:["Let's go!",'走啦走啦','看镜头','今天也很好']},
-             {n:'Elio',g:makeChar('elio'),x:9,z:8,vx:0,vz:0,face:0,jump:0,walk:0,lines:['等我一下','橙子给你','哎，别拍','嘿嘿']}];
+const chars=[{n:'Ayden',g:makeChar('ayden'),x:-9,z:8,vx:0,vz:0,face:0,jump:0,walk:0,lines:["Let's go!",'走啦走啦','看镜头','今天也很好','小贝别跑了']},
+             {n:'Elio',g:makeChar('elio'),x:9,z:8,vx:0,vz:0,face:0,jump:0,walk:0,lines:['等我一下','橙子给你','哎，别拍','嘿嘿','瞳瞳大王，驾到']}];
 let active=0;
 const CATS=['gray','silver','ash','ginger','orange','silver2'];
 const cats=CATS.map((k,i)=>{const g=voxel('cat_'+k,4);g.userData.name='cat';g.scale.setScalar(0.15);scene.add(g);
@@ -369,7 +369,7 @@ function click(x,y){pt.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCam
   if(n==='cathouse'){openCat();return}
   if(n==='quiz'){openQuiz();return}
   if(n==='fan'){const e=g.userData.entry;say({g,h:g.userData.h},e.n+(e.m?'：'+e.m:''),2.6);return}
-  if(n==='cat'){const c=cats.find(c=>c.g===g);c.run=1.2;const a=rnd(0,Math.PI*2);c.tx=Math.max(-62,Math.min(62,c.x+Math.cos(a)*18));c.tz=Math.max(-14,Math.min(56,c.z+Math.sin(a)*18));c.wait=0;say(c,Math.random()<.5?'喵！':c.name+'：喵～');return}
+  if(n==='cat'){const c=cats.find(c=>c.g===g);c.run=1.2;if(Math.random()<.5)say(chars[0],'小贝别跑了',1.8);const a=rnd(0,Math.PI*2);c.tx=Math.max(-62,Math.min(62,c.x+Math.cos(a)*18));c.tz=Math.max(-14,Math.min(56,c.z+Math.sin(a)*18));c.wait=0;say(c,Math.random()<.5?'喵！':c.name+'：喵～');return}
   if(n==='camera'){const f=document.getElementById('flash');f.style.opacity=1;setTimeout(()=>{f.style.opacity=0;snap()},80);cam3.shake=1;return}
   if(n==='orange'&&orange.alive)collect();
   if(n==='heart'){heart.pulse=1;chars.forEach(c=>say(c,'❤',1.2))}}
