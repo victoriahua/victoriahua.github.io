@@ -667,13 +667,17 @@ function ask(msg,ms=1500){return new Promise(res=>{const id=++pid;pend[id]=res;s
 addEventListener('message',e=>{const d=e.data;if(d&&d.reply&&pend[d.id]){pend[d.id](d.value);delete pend[d.id]}});
 let embedP=null;   // 只有花园页面真的在另一头应答时才走桥接，否则用本地存储
 function embedded(){if(!embedP)embedP=(window.parent===window)?Promise.resolve(false):ask({type:'hello'},800).then(v=>v===true);return embedP}
-const pstore={
+const SB={url:'https://api.aydenelio.love',alt:'https://pdohmloezybrvhzwrrll.supabase.co',key:'sb_publishable_NYZD-GOIA5VsgHtOy85fGA_B4mkk58F'};
+async function sb(path,opt={}){const init=Object.assign({},opt,{headers:Object.assign({apikey:SB.key,Authorization:'Bearer '+SB.key,'Content-Type':'application/json',Prefer:'return=minimal'},opt.headers||{})});
+  let r;try{r=await fetch(SB.url+'/rest/v1/'+path,init)}catch(e){r=await fetch(SB.alt+'/rest/v1/'+path,init)}if(!r.ok)throw new Error('db '+r.status);const t=await r.text();return t?JSON.parse(t):null}
+const pstore={   // 单独打开时也直接用同一个数据库，和花园里一致
   async get(key){if(await embedded()){const v=await ask({type:'store-get',key});if(v!==undefined)return v||[]}
-    try{if(window.storage){const r=await window.storage.get(key,true);return r?JSON.parse(r.value):[]}}catch(e){}
-    try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(e){return []}},
-  async set(key,list){if(await embedded()){const v=await ask({type:'store-set',key,value:list});if(v!==undefined)return}
-    try{if(window.storage){await window.storage.set(key,JSON.stringify(list),true);return}}catch(e){}
-    try{localStorage.setItem(key,JSON.stringify(list))}catch(e){}}};
+    if(key==='catgame-runs'){const n=await sb('rpc/run_count',{method:'POST',body:'{}'});return [Number(n)||0]}
+    if(key==='catgame-prizes'){const rows=await sb('rpc/prize_summary',{method:'POST',body:'{}'});const list=[];(rows||[]).forEach(r=>{for(let i=0;i<Number(r.cnt);i++)list.push({p:r.p})});return list}
+    return []},
+  async set(key,list){if(await embedded()){const v=await ask({type:'store-set',key,value:list});if(v!==undefined)return v}
+    try{if(key==='catgame-runs'){await sb('runs',{method:'POST',body:JSON.stringify({t:Date.now()})});return true}
+      if(key==='catgame-prizes'){const d=list[list.length-1];if(!d)return true;await sb('prizes',{method:'POST',body:JSON.stringify({t:d.t||Date.now(),n:String(d.n||'').toLowerCase(),data:d})});return true}}catch(e){return false}return true}};
 function card(html){document.getElementById('prizeCard').innerHTML=html;document.getElementById('prize').classList.add('on')}
 function closePrize(){document.getElementById('prize').classList.remove('on');showStatus()}
 function remaining(wins){const r={};for(const k in PRIZES)r[k]=PRIZES[k].total-wins.filter(w=>w.p===k).length;return r}
@@ -702,11 +706,13 @@ async function rollPrize(){
 async function claimPrize(){
   const nick=(document.getElementById('prizeNick').value||'').trim();if(!nick){document.getElementById('prizeNick').focus();return}
   const wins=await pstore.get('catgame-prizes');
-  if(wins.some(w=>w.n.toLowerCase()===nick.toLowerCase())){card(`<h2>这个 ID 已经领过了</h2><p>一人一份，把机会留给别人吧 🧡</p><button onclick="closePrize()">好的</button>`+(TEST?'<br><button class="alt" onclick="resetPrizes()">清空奖池（测试）</button>':''));return}
+  let dup=false;try{dup=(await embedded())?false:await sb('rpc/nick_claimed',{method:'POST',body:JSON.stringify({nick})})}catch(e){}
+  if(dup===true||wins.some(w=>w.n&&w.n.toLowerCase()===nick.toLowerCase())){card(`<h2>这个 ID 已经领过了</h2><p>一人一份，把机会留给别人吧 🧡</p><button onclick="closePrize()">好的</button>`+(TEST?'<br><button class="alt" onclick="resetPrizes()">清空奖池（测试）</button>':''));return}
   if(!TEST&&releasedSoFar()-wins.length<=0){card(`<h2>晚了一步</h2><p>这一轮刚刚被领完了 🥲</p><button onclick="closePrize()">好的</button>`);return}
   const rem=remaining(wins);let p=pendingPrize;if(rem[p]<=0){p=Object.keys(rem).find(k=>rem[k]>0);if(!p){card(`<h2>晚了一步</h2><p>刚刚被领完了 🥲</p><button onclick="closePrize()">好的</button>`);return}}
   const w={n:nick,p,code:mkcode(),t:Date.now()};wins.push(w);const ok=await pstore.set('catgame-prizes',wins);if(ok===false){card(`<h2>没领到</h2><p>这个 ID 可能已经领过，或者网络出错了</p><button onclick="closePrize()">好的</button>`);return}localStorage.setItem('catgame-won',JSON.stringify(w));
-  card((TEST?'<p style="color:#c33">测试模式</p>':'')+`<h2>恭喜 ${nick}！</h2><p>${PRIZES[p].name} 一份 · 兑换码</p><div class="code">${w.code}</div><p>截图这一页，私信后援会领取</p><small>剩余：钥匙扣 ${remaining(wins).keychain} · 冰箱贴 ${remaining(wins).magnet}</small><button onclick="closePrize()">收好了</button>`+(TEST?'<br><button class="alt" onclick="resetPrizes()">清空奖池（测试）</button>':''));
+  if(TEST){card('<h2>测试模式</h2><p>流程正常，不发兑换码</p><button onclick="closePrize()">好的</button>');return}
+  card(`<h2>恭喜 ${nick}！</h2><p>${PRIZES[p].name} 一份 · 兑换码</p><div class="code">${w.code}</div><p>截图这一页，私信后援会领取</p><small>剩余：钥匙扣 ${remaining(wins).keychain} · 冰箱贴 ${remaining(wins).magnet}</small><button onclick="closePrize()">收好了</button>`+(TEST?'<br><button class="alt" onclick="resetPrizes()">清空奖池（测试）</button>':''));
   if(await embedded())window.parent.postMessage({from:'catgame',type:'prize-won',win:w},'*');
 }
 </script>
