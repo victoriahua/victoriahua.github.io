@@ -71,7 +71,7 @@
 <div id="stage"></div>
 <div id="topfade"></div>
 <div id="title">Ayden ×Elio</div>
-<div id="hint">摇杆/方向键跑动 · 点人物切换 · 拖动转视角 · <span id="ver">v0926-4</span></div>
+<div id="hint">摇杆/方向键跑动 · 点人物切换 · 拖动转视角 · <span id="ver">v0926-5</span></div>
 <div id="count"></div>
 <div id="tools"><button class="btn" id="btnSnap">📷 拍照</button><button class="btn" id="btnAR" style="background:#f2c14e;color:#3a2a20">🤳 和他们合影</button><button class="btn alt" id="btnWall">留言墙</button><button class="btn alt" id="btnCat">🐱 找猫猫</button><button class="btn alt" id="btnQuiz">❓ 问答</button><div id="lives" title="每天的挑战次数"></div></div>
 <input type="file" id="arPhotoIn" accept="image/*" style="display:none">
@@ -81,7 +81,7 @@
   <div id="arBar"><button class="btn" id="arShot">📷 拍</button><button class="btn alt" id="arFlip">翻转</button><button class="btn alt" id="arSys">手机相机</button><button class="btn alt" id="arPick">相册</button><button class="btn alt" id="arClose">关闭</button></div>
 </div>
 <input type="file" id="arCamIn" accept="image/*" capture="user" style="display:none">
-<div id="catUI"><button class="btn alt" id="catClose">← 回花园</button><iframe id="catFrame" title="喵喵大作战"></iframe></div>
+<div id="catUI"><button class="btn alt" id="catClose">← 回花园</button><a class="btn" id="catAlt" href="catgame.html" target="_blank" rel="noopener" style="position:fixed;top:10px;right:10px;z-index:12;padding:8px 10px;font-size:12px;display:none">打不开？点这里新页面打开</a><iframe id="catFrame" title="喵喵大作战"></iframe></div>
 <div id="bookUI"><div class="bookWrap">
   <canvas id="mapC" width="1040" height="640"></canvas>
   <div class="bookBar"><span id="bookTip">点第一次见到他们的地方，再点下一次想见的地方</span><span>已有 <b id="lineCount">0</b> 条红线</span></div>
@@ -625,7 +625,7 @@ function finishQuiz(){const el=document.getElementById('quizCard');const all=qui
 document.getElementById('btnQuiz').onclick=openQuiz;
 
 // ---------- 找猫猫（catgame.html 同目录）+ 奖品库存桥接 ----------
-function openCat(){const f=document.getElementById('catFrame');if(!f.srcdoc){const b=atob(document.getElementById('catSrc').textContent.trim());const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);f.srcdoc=new TextDecoder().decode(u)}document.getElementById('catUI').style.display='block'}
+function openCat(){const f=document.getElementById('catFrame');const alt=document.getElementById('catAlt');alt.style.display='none';setTimeout(()=>{try{if(!f.contentDocument||!f.contentDocument.querySelector('#start'))alt.style.display='inline-block'}catch(e){alt.style.display='inline-block'}},6000);if(!f.srcdoc){const b=atob(document.getElementById('catSrc').textContent.trim());const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);f.srcdoc=new TextDecoder().decode(u)}document.getElementById('catUI').style.display='block'}
 document.getElementById('btnCat').onclick=openCat;
 document.getElementById('catClose').onclick=()=>{document.getElementById('catUI').style.display='none';refreshPrizeSign()};
 addEventListener('message',async e=>{const d=e.data;if(!d||d.from!=='catgame')return;const f=document.getElementById('catFrame');
