@@ -660,7 +660,7 @@ async function showStatus(){try{const wins=await pstore.get('catgame-prizes');co
 setTimeout(showStatus,300);
 const PRIZES={keychain:{name:'字母钥匙扣一对',total:2},magnet:{name:'新加坡特色冰箱贴',total:10},monchhichi:{name:'瞳瞳同款狮尾新加坡蒙奇奇',total:2},blindbox:{name:'新加坡盲盒冰箱贴',total:4}};   // 一共 18 份
 const STEP=20;                        // 每 20 次通关掉落 1 份（掉落位置在每 20 次里随机，不是固定第 20 个）
-const RELEASES=[['2026-09-26 17:30',4],['2026-09-27 11:30',3],['2026-09-28 14:00',3],['2026-09-29 09:45',3],['2026-09-30 16:20',3],['2026-10-01 12:10',2]];
+const RELEASES=[['2026-09-26 17:30',8],['2026-09-27 11:30',2],['2026-09-28 14:00',2],['2026-09-29 09:45',2],['2026-09-30 16:20',2],['2026-10-01 12:10',2]];
 let TEST=false;
 const pend={};let pid=0;
 function ask(msg,ms=1500){return new Promise(res=>{const id=++pid;pend[id]=res;setTimeout(()=>{if(pend[id]){delete pend[id];res(undefined)}},ms);try{window.parent.postMessage({...msg,id,from:'catgame'},'*')}catch(e){res(undefined)}})}
